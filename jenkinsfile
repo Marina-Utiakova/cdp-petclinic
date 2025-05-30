@@ -1,9 +1,11 @@
 pipeline {
   agent any
-  tools { maven 'MAVEN3' }
+  tools {
+    maven 'MAVEN3'
+  }
 
   environment {
-    NEXUS_HOSTPORT      = '100.26.97.74:8081'
+    NEXUS_HOSTPORT      = '44.211.67.68:8081'
     NEXUS_DOWNLOAD_CRED = 'nexus-user-pass'
     NEXUS_UPLOAD_CRED   = 'nexus-ci-creds'
     REPO_RELEASE        = 'vprofile-release'
@@ -14,19 +16,21 @@ pipeline {
 
   stages {
     stage('Checkout') {
-      steps { checkout scm }
+      steps {
+        checkout scm
+      }
     }
 
     stage('Build & Deploy') {
-  steps {
-    withCredentials([usernamePassword(
-      credentialsId: env.NEXUS_DOWNLOAD_CRED,  // <-- здесь именно download-креденшиал
-      usernameVariable: 'NEXUS_USR',
-      passwordVariable: 'NEXUS_PSW'
-    )]) {
-      sh '''
-        # Генерируем settings.xml
-        cat > settings.xml <<EOF
+      steps {
+        withCredentials([usernamePassword(
+          credentialsId: "${env.NEXUS_DOWNLOAD_CRED}",  // вот правильный ID
+          usernameVariable: 'NEXUS_USR',
+          passwordVariable: 'NEXUS_PSW'
+        )]) {
+          sh """
+            # Генерируем settings.xml с mirror и server-ами
+            cat > settings.xml <<EOF
 <settings>
   <mirrors>
     <mirror>
@@ -39,23 +43,35 @@ pipeline {
   <servers>
     <server>
       <id>${REPO_RELEASE}</id>
-      <username>${NEXUS_USR}</username>
-      <password>${NEXUS_PSW}</password>
+      <username>\${NEXUS_USR}</username>
+      <password>\${NEXUS_PSW}</password>
     </server>
     <server>
       <id>${REPO_SNAPSHOT}</id>
-      <username>${NEXUS_USR}</username>
-      <password>${NEXUS_PSW}</password>
+      <username>\${NEXUS_USR}</username>
+      <password>\${NEXUS_PSW}</password>
     </server>
   </servers>
 </settings>
 EOF
-        # Собираем и деплоим
-        mvn -s settings.xml clean deploy -DskipTests -Dcheckstyle.skip=true
-      '''
+            # Собираем и деплоим сразу в Nexus
+            mvn -s settings.xml clean deploy -DskipTests -Dcheckstyle.skip=true
+          """
+        }
+      }
+    }
+  }
+
+  post {
+    success {
+      echo "✅ Build & deploy to Nexus succeeded"
+    }
+    failure {
+      echo "❌ Build or deploy failed"
     }
   }
 }
+
 
 
 
