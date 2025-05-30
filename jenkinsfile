@@ -1,8 +1,6 @@
 pipeline {
   agent any
-  tools {
-    maven 'MAVEN3'
-  }
+  tools { maven 'MAVEN3' }
 
   environment {
     NEXUS_HOSTPORT      = '44.211.67.68:8081'
@@ -12,6 +10,7 @@ pipeline {
     REPO_SNAPSHOT       = 'vprofile-snapshot'
     GROUP_ID            = 'org.springframework.samples'
     ARTIFACT_ID         = 'spring-petclinic'
+    VERSION             = "${env.BUILD_NUMBER}"
   }
 
   stages {
@@ -24,12 +23,11 @@ pipeline {
     stage('Build & Deploy') {
       steps {
         withCredentials([usernamePassword(
-          credentialsId: "${env.NEXUS_DOWNLOAD_CRED}",  // вот правильный ID
+          credentialsId: env.NEXUS_DOWNLOAD_CRED,
           usernameVariable: 'NEXUS_USR',
           passwordVariable: 'NEXUS_PSW'
         )]) {
           sh """
-            # Генерируем settings.xml с mirror и server-ами
             cat > settings.xml <<EOF
 <settings>
   <mirrors>
@@ -40,7 +38,13 @@ pipeline {
       <mirrorOf>*</mirrorOf>
     </mirror>
   </mirrors>
+
   <servers>
+    <server>
+      <id>nexus-public</id>
+      <username>\${NEXUS_USR}</username>
+      <password>\${NEXUS_PSW}</password>
+    </server>
     <server>
       <id>${REPO_RELEASE}</id>
       <username>\${NEXUS_USR}</username>
@@ -54,7 +58,6 @@ pipeline {
   </servers>
 </settings>
 EOF
-            # Собираем и деплоим сразу в Nexus
             mvn -s settings.xml clean deploy -DskipTests -Dcheckstyle.skip=true
           """
         }
@@ -71,6 +74,7 @@ EOF
     }
   }
 }
+
 
 
 
