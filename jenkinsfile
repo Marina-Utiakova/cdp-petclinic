@@ -4,13 +4,12 @@ pipeline {
     maven 'MAVEN3'
   }
   environment {
-    NEXUS_URL             = 'http://44.211.67.68'
-    NEXUS_DOWNLOAD_CRED   = 'nexus-user-pass'
-    NEXUS_UPLOAD_CRED     = 'nexus-ci-creds'
-    REPO_RELEASE          = 'vprofile-release'
-    GROUP_ID              = 'org.springframework.samples'
-    ARTIFACT_ID           = 'spring-petclinic'
-    VERSION               = "${env.BUILD_NUMBER}"
+    NEXUS_URL           = 'http://100.26.97.74:8081'
+    NEXUS_DOWNLOAD_CRED = 'nexus-user-pass'
+    NEXUS_UPLOAD_CRED   = 'nexus-ci-creds'
+    REPO_RELEASE        = 'vprofile-release'
+    GROUP_ID            = 'org.springframework.samples'
+    ARTIFACT_ID         = 'spring-petclinic'
   }
   stages {
     stage('Checkout') {
@@ -49,6 +48,14 @@ EOF
             mvn -s settings.xml clean package -DskipTests -Dcheckstyle.skip=true
           '''
         }
+        // теперь достанем версию из pom.xml
+        script {
+          env.VERSION = sh(
+            script: "mvn help:evaluate -Dexpression=project.version -q -DforceStdout",
+            returnStdout: true
+          ).trim()
+          echo "Project version is ${env.VERSION}"
+        }
       }
     }
 
@@ -81,5 +88,6 @@ EOF
     }
   }
 }
+
 
 
