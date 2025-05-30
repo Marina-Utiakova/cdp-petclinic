@@ -55,12 +55,11 @@ EOF
     stage('Determine Version') {
       steps {
         script {
-          // Извлекаем реальную версию из pom.xml, например "3.4.0-SNAPSHOT"
           env.VERSION = sh(
             script: "mvn help:evaluate -Dexpression=project.version -q -DforceStdout",
             returnStdout: true
           ).trim()
-          echo " → Project version is ${env.VERSION}"
+          echo "Project version is ${env.VERSION}"
         }
       }
     }
@@ -68,7 +67,7 @@ EOF
     stage('Publish to Nexus') {
       steps {
         script {
-          // Выбираем репозиторий: snapshot или release
+          // Выбираем релизный или снапшот-репо по суффиксу версии
           def repo = env.VERSION.endsWith('-SNAPSHOT') ? env.REPO_SNAPSHOT : env.REPO_RELEASE
 
           nexusArtifactUploader(
@@ -79,9 +78,11 @@ EOF
             credentialsId: env.NEXUS_UPLOAD_CRED,
             groupId:     env.GROUP_ID,
             version:     env.VERSION,
-            artifactId:  env.ARTIFACT_ID,
-            file:        "target/${env.ARTIFACT_ID}-${env.VERSION}.jar",
-            type:        'jar'
+            artifacts: [[
+              artifactId: env.ARTIFACT_ID,
+              file:       "target/${env.ARTIFACT_ID}-${env.VERSION}.jar",
+              type:       'jar'
+            ]]
           )
         }
       }
@@ -93,10 +94,11 @@ EOF
       echo "✅ Published ${GROUP_ID}:${ARTIFACT_ID}:${VERSION} to Nexus"
     }
     failure {
-      echo "❌ Build or publish failed"
+      echo "❌ Build or deploy failed"
     }
   }
 }
+
 
 
 
