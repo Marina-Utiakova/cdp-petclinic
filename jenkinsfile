@@ -33,9 +33,13 @@ pipeline {
           credentialsId: "${env.NEXUS_CRED}",
           groupId: "${env.GROUP_ID}",
           version: "${env.VERSION}",
-          artifactId: "${env.ARTIFACT_ID}",
-          file: "target/${ARTIFACT_ID}-${VERSION}.war",
-          type: 'war'
+          artifacts: [
+            [
+              artifactId: "${env.ARTIFACT_ID}",
+              file:        "target/${env.ARTIFACT_ID}-${env.VERSION}.war",
+              type:        'war'
+            ]
+          ]
         )
       }
     }
