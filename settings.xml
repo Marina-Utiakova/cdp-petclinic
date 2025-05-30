@@ -1,0 +1,39 @@
+<settings>
+  <mirrors>
+    <!-- all external requests go through your Nexus -->
+    <mirror>
+      <id>nexus-public</id>
+      <name>Nexus Public Mirror</name>
+      <url>http://100.26.97.74:8081/repository/maven-public/</url> <!-- TODO: replace with your Nexus server's Public IPv4 address -->
+      <mirrorOf>*</mirrorOf>
+    </mirror>
+  </mirrors>
+
+  <profiles>
+    <!-- profile for deploying both releases and snapshots -->
+    <profile>
+      <id>deploy</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <distributionManagement>
+        <repository>
+          <id>vprofile-release</id>
+          <name>Releases</name>
+          <url>http://100.26.97.74:8081/repository/vprofile-release/</url> <!-- TODO: replace with your Nexus server's Public IPv4 address -->
+        </repository>
+        <snapshotRepository>
+          <id>vprofile-snapshot</id>
+          <name>Snapshots</name>
+          <url>http://100.26.97.74:8081/repository/vprofile-snapshot/</url> <!-- TODO: replace with your Nexus server's Public IPv4 address -->
+        </snapshotRepository>
+      </distributionManagement>
+    </profile>
+  </profiles>
+
+  <activeProfiles>
+    <activeProfile>deploy</activeProfile>
+  </activeProfiles>
+</settings>
+
+

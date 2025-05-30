@@ -1,0 +1,52 @@
+pipeline {
+  agent any
+  tools {
+    maven 'MAVEN3'              // name of your Maven installation in Jenkins
+  }
+  environment {
+    NEXUS_URL    = 'http://100.26.97.74:8081'   // TODO: replace with your Nexus Public IPv4 address
+    NEXUS_CRED   = 'nexus-ci-creds'              // ID of the Jenkins credential you created
+    REPO_RELEASE = 'vprofile-release'            // your Nexus release repository
+    GROUP_ID     = 'org.springframework.samples'  // from pom.xml
+    ARTIFACT_ID  = 'spring-petclinic'            // from pom.xml
+    VERSION      = "${env.BUILD_NUMBER}"         // use build number for a non‐snapshot version
+  }
+  stages {
+    stage('Checkout') {
+      steps {
+        checkout scm
+      }
+    }
+    stage('Build WAR') {
+      steps {
+        // use our settings.xml to point Maven at Nexus
+        sh 'mvn -s settings.xml clean package -DskipTests'
+      }
+    }
+    stage('Publish to Nexus') {
+      steps {
+        nexusArtifactUploader(
+          nexusVersion: 'nexus3',
+          protocol: 'http',
+          nexusUrl: "${env.NEXUS_URL}",
+          repository: "${env.REPO_RELEASE}",
+          credentialsId: "${env.NEXUS_CRED}",
+          groupId: "${env.GROUP_ID}",
+          version: "${env.VERSION}",
+          artifactId: "${env.ARTIFACT_ID}",
+          file: "target/${ARTIFACT_ID}-${VERSION}.war",
+          type: 'war'
+        )
+      }
+    }
+  }
+  post {
+    success {
+      echo "✅ Published ${GROUP_ID}:${ARTIFACT_ID}:${VERSION} to Nexus"
+    }
+    failure {
+      echo "❌ Build or publish failed"
+    }
+  }
+}
+
