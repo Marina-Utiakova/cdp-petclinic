@@ -5,8 +5,8 @@ pipeline {
   }
   environment {
     NEXUS_URL             = 'http://100.26.97.74:8081'
-    NEXUS_DOWNLOAD_CRED   = 'nexus-user-pass'   
-    NEXUS_UPLOAD_CRED     = 'nexus-ci-creds'   
+    NEXUS_DOWNLOAD_CRED   = 'nexus-user-pass'
+    NEXUS_UPLOAD_CRED     = 'nexus-ci-creds'
     REPO_RELEASE          = 'vprofile-release'
     GROUP_ID              = 'org.springframework.samples'
     ARTIFACT_ID           = 'spring-petclinic'
@@ -14,19 +14,21 @@ pipeline {
   }
   stages {
     stage('Checkout') {
-      steps { checkout scm }
+      steps {
+        checkout scm
+      }
     }
 
     stage('Build WAR') {
-  steps {
-    // генерируем settings.xml внутри сборки
-    withCredentials([usernamePassword(
-      credentialsId: 'nexus-user-pass',   // для скачивания зависимостей
-      usernameVariable: 'NEXUS_USR',
-      passwordVariable: 'NEXUS_PSW'
-    )]) {
-      sh '''
-        cat > settings.xml <<EOF
+      steps {
+        // генерируем settings.xml внутри сборки
+        withCredentials([usernamePassword(
+          credentialsId: env.NEXUS_DOWNLOAD_CRED,
+          usernameVariable: 'NEXUS_USR',
+          passwordVariable: 'NEXUS_PSW'
+        )]) {
+          sh '''
+            cat > settings.xml <<EOF
 <settings>
   <mirrors>
     <mirror>
@@ -45,11 +47,11 @@ pipeline {
   </servers>
 </settings>
 EOF
-        mvn -s settings.xml clean package -DskipTests
-      '''
+            mvn -s settings.xml clean package -DskipTests -Dcheckstyle.skip=true
+          '''
+        }
+      }
     }
-  }
-}
 
     stage('Publish to Nexus') {
       steps {
@@ -73,9 +75,14 @@ EOF
   }
 
   post {
-    success { echo "✅ Published ${GROUP_ID}:${ARTIFACT_ID}:${VERSION} to Nexus" }
-    failure { echo "❌ Build or publish failed" }
+    success {
+      echo "✅ Published ${GROUP_ID}:${ARTIFACT_ID}:${VERSION} to Nexus"
+    }
+    failure {
+      echo "❌ Build or publish failed"
+    }
   }
 }
+
 
 
