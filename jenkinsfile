@@ -19,9 +19,8 @@ pipeline {
       }
     }
 
-    stage('Build WAR') {
+    stage('Build JAR') {
       steps {
-        // генерируем settings.xml внутри сборки
         withCredentials([usernamePassword(
           credentialsId: env.NEXUS_DOWNLOAD_CRED,
           usernameVariable: 'NEXUS_USR',
@@ -55,7 +54,6 @@ EOF
 
     stage('Publish to Nexus') {
       steps {
-        // загружаем артефакт в Nexus
         nexusArtifactUploader(
           nexusVersion: 'nexus3',
           protocol:    'http',
@@ -66,8 +64,8 @@ EOF
           version:     env.VERSION,
           artifacts: [[
             artifactId: env.ARTIFACT_ID,
-            file:       "target/${env.ARTIFACT_ID}-${env.VERSION}.war",
-            type:       'war'
+            file:       "target/${env.ARTIFACT_ID}-${env.VERSION}.jar",
+            type:       'jar'
           ]]
         )
       }
@@ -76,13 +74,12 @@ EOF
 
   post {
     success {
-      echo "✅ Published ${GROUP_ID}:${ARTIFACT_ID}:${VERSION} to Nexus"
+      echo "✅ Published ${GROUP_ID}:${ARTIFACT_ID}:${VERSION}.jar to Nexus"
     }
     failure {
       echo "❌ Build or publish failed"
     }
   }
 }
-
 
 
