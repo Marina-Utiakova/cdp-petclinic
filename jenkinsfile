@@ -4,7 +4,7 @@ pipeline {
     maven 'MAVEN3'
   }
   environment {
-    NEXUS_URL             = 'http://100.26.97.74:8081'
+    NEXUS_URL             = 'http://44.211.67.68'
     NEXUS_DOWNLOAD_CRED   = 'nexus-user-pass'
     NEXUS_UPLOAD_CRED     = 'nexus-ci-creds'
     REPO_RELEASE          = 'vprofile-release'
